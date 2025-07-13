@@ -19,16 +19,16 @@ if len(str(pin)) < 6:
 def run(cmd, shell=False, check=True):
     print(f"🔧 تنفيذ: {cmd}")
     if shell:
-        subprocess.run(cmd, shell=True, check=check)
+        subprocess.run(f"sudo {cmd}", shell=True, check=check)
     else:
-        subprocess.run(cmd.split(), check=check)
+        subprocess.run(["sudo"] + cmd.split(), check=check)
 
 # === تحديث النظام ===
 run("apt update && apt upgrade -y", shell=True)
 
 # === إنشاء المستخدم بصلاحيات sudo ===
 run(f"useradd -m -s /bin/bash {username}")
-run(f"echo '{username}:{password}' | chpasswd")
+run(f"bash -c \"echo '{username}:{password}' | chpasswd\"")
 run(f"adduser {username} sudo")
 
 # === تثبيت Chrome Remote Desktop ===
@@ -40,8 +40,7 @@ run("apt install -f -y", shell=True)
 run("DEBIAN_FRONTEND=noninteractive apt install -y xfce4 xfce4-terminal dbus-x11 xscreensaver")
 
 # إعداد جلسة XFCE لـ CRD
-with open("/etc/chrome-remote-desktop-session", "w") as f:
-    f.write("exec /etc/X11/Xsession /usr/bin/xfce4-session\n")
+run("bash -c \"echo 'exec /etc/X11/Xsession /usr/bin/xfce4-session' > /etc/chrome-remote-desktop-session\"")
 
 # إزالة GNOME Terminal إذا وجد
 run("apt remove -y gnome-terminal", shell=True)

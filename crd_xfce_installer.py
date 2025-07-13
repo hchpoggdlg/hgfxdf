@@ -18,13 +18,25 @@ if len(str(pin)) < 6:
 
 def run(cmd, shell=False, check=True):
     print(f"🔧 تنفيذ: {cmd}")
-    if shell:
-        subprocess.run(f"sudo {cmd}", shell=True, check=check)
-    else:
-        subprocess.run(["sudo"] + cmd.split(), check=check)
+    try:
+        if shell:
+            result = subprocess.run(f"sudo {cmd}", shell=True, check=check, capture_output=True, text=True)
+        else:
+            result = subprocess.run(["sudo"] + cmd.split(), check=check, capture_output=True, text=True)
+        print(result.stdout)
+        if result.stderr:
+            print(f"⚠️ تحذير: {result.stderr}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ خطأ في تنفيذ الأمر: {e.stderr}")
+        return False
 
 # === تحديث النظام ===
-run("apt update && apt upgrade -y", shell=True)
+if not run("apt update && apt upgrade -y", shell=True):
+    print("❌ فشل في تحديث النظام، جاري المحاولة بإصلاح التبعيات...")
+    run("apt --fix-broken install -y", shell=True)
+    run("dpkg --configure -a", shell=True)
+    run("apt update && apt upgrade -y", shell=True)
 
 # === إنشاء المستخدم بصلاحيات sudo ===
 run(f"useradd -m -s /bin/bash {username}")
